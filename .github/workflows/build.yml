@@ -17,6 +17,9 @@ jobs:
       - name: Estrai progetto
         run: unzip -o tpx-project.zip
 
+      - name: Applica correzioni (cartella override)
+        run: if [ -d override ]; then cp -rv override/. . ; fi
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
