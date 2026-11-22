@@ -1,0 +1,247 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220"><title>TPX Router</title>
+<style>
+:root{--bg:#0b1220;--card:#131c2e;--card2:#1a2540;--line:#24314d;--txt:#e7ecf5;--mut:#8b98b3;--acc:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Roboto,sans-serif;padding-bottom:84px}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,#0b1220 70%,rgba(11,18,32,0));padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.2px}
+header h1 span{color:var(--acc)}
+#st{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+#dot{width:9px;height:9px;border-radius:50%;background:var(--mut)}
+main{padding:0 14px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin:12px 0}
+.card h3{margin:0 0 4px;font-size:16px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row .l{flex:1;min-width:0}
+.row .t{font-weight:600}
+.row .d{color:var(--mut);font-size:13px}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.k{background:var(--card2);border-radius:14px;padding:12px}
+.k .n{font-size:12px;color:var(--mut)}.k .v{font-size:20px;font-weight:700;margin-top:2px}
+.on-t{color:var(--ok)}.off-t{color:var(--mut)}
+.sw{position:relative;width:52px;height:30px;flex:none}
+.sw input{opacity:0;width:0;height:0}
+.sw i{position:absolute;inset:0;background:#334155;border-radius:30px;transition:.2s}
+.sw i:before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+i{background:var(--ok)}.sw input:checked+i:before{transform:translateX(22px)}
+input.f,select.f,textarea.f{background:#0a1020;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:16px system-ui;width:120px}
+textarea.f{width:100%;min-height:80px;font:13px monospace}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.grid2 label{font-size:13px;color:var(--mut)}.grid2 input{width:100%;margin-top:4px}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-weight:700;font-size:15px}
+.btn.g{background:#334155}.btn.r{background:#b45309}.btn.w{width:100%;margin-top:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.chip b{font-size:15px}.chip small{color:var(--mut)}
+.chip.act{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.chip button{background:none;border:0;color:var(--mut);font-size:18px;padding:0 2px}
+.help{background:#0f1a30;border-left:3px solid var(--acc);border-radius:10px;padding:10px 12px;font-size:13.5px;color:#c7d2e6;margin:8px 0}
+.help.w{border-color:var(--warn)}
+.ro{color:var(--mut);font-family:monospace}
+details.adv{margin-top:8px}details.adv summary{color:var(--acc);font-weight:600;padding:6px 0}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0d1526;border-top:1px solid var(--line);display:flex;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+nav button{flex:1;background:none;border:0;color:var(--mut);font-size:11px;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button.on{color:var(--acc)}nav svg{width:24px;height:24px}
+#toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);background:#1e293b;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%)}
+#busy{position:fixed;inset:0;background:rgba(5,10,20,.55);display:none;align-items:center;justify-content:center;z-index:20}
+#busy.show{display:flex}
+.spin{width:44px;height:44px;border:4px solid #334155;border-top-color:var(--acc);border-radius:50%;animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.guide h4{margin:14px 0 4px;font-size:15px}.guide p{margin:0 0 6px;color:#c7d2e6;font-size:14px}
+</style></head><body>
+<header><h1>TPX <span>Router</span></h1><div id="st"><i id="dot"></i><span id="stt">...</span></div></header>
+<main>
+<section id="t-setup" class="tab"><div class="card"><h3>Benvenuto</h3><p class="sub">Inserisci la password del router una sola volta. Resta salvata solo su questo telefono. Devi essere collegato al Wi-Fi di casa.</p>
+<input id="pw" class="f" type="password" style="width:100%" placeholder="Password del router"><button class="btn w" onclick="setup()">Collega</button></div></section>
+
+<section id="t-home" class="tab">
+<div class="card"><h3>Stato</h3><div class="kpi">
+<div class="k"><div class="n">QoS</div><div class="v" id="k-qos">-</div></div>
+<div class="k"><div class="n">NAT Boost</div><div class="v" id="k-boost">-</div></div>
+<div class="k"><div class="n">DMZ</div><div class="v" id="k-dmz">-</div></div>
+<div class="k"><div class="n">UPnP</div><div class="v" id="k-upnp">-</div></div></div>
+<button class="btn g w" onclick="home()">Aggiorna</button></div>
+<div class="card"><h3>Interruttori rapidi</h3>
+<div class="row"><div class="l"><div class="t">QoS</div><div class="d" id="d-qos">Controllo della banda</div></div><label class="sw"><input type="checkbox" id="s-qos" onchange="tog('qos',this)"><i></i></label></div>
+<div class="row"><div class="l"><div class="t">NAT Boost</div><div class="d">Accelerazione hardware</div></div><label class="sw"><input type="checkbox" id="s-boost" onchange="tog('boost',this)"><i></i></label></div>
+<div class="row"><div class="l"><div class="t">DMZ</div><div class="d" id="d-dmz">Tutte le porte verso un dispositivo</div></div><label class="sw"><input type="checkbox" id="s-dmz" onchange="tog('dmz',this)"><i></i></label></div>
+<div class="row"><div class="l"><div class="t">UPnP</div><div class="d">Apertura automatica delle porte</div></div><label class="sw"><input type="checkbox" id="s-upnp" onchange="tog('upnp',this)"><i></i></label></div>
+<div class="help w">Con il QoS acceso il router spegne da solo il NAT Boost: i due non possono funzionare insieme su questo modello.</div></div>
+<div class="card"><h3>🎮 Gaming Boost</h3><p class="sub">QoS spento + NAT Boost acceso, e un tetto di velocità a tutti i dispositivi tranne quelli che scegli tu. Quelli in prima linea restano liberi, con la linea piena e l'accelerazione hardware.</p>
+<div class="t" style="margin-top:6px">Dispositivi in prima linea</div><div class="d" style="color:var(--mut);font-size:13px">Spunta quelli da NON limitare (es. PS5). Tutti gli altri avranno il tetto di velocità.</div><div id="gb-devs" style="margin:6px 0 4px"></div>
+<div class="grid2"><label>Limite download altri (Mbps)<input id="gb-down" class="f" type="number" inputmode="numeric"></label><label>Limite upload altri (Mbps)<input id="gb-up" class="f" type="number" inputmode="numeric"></label></div>
+<button class="btn w" onclick="gbOn()">Attiva Gaming Boost</button><button class="btn g w" onclick="gbOff()">Disattiva (togli tutti i limiti)</button>
+<p class="sub" id="gb-state" style="margin-top:8px"></p></div>
+<div class="card"><h3>Profili QoS</h3><p class="sub">Tocca un profilo per attivarlo subito.</p><div class="chips" id="home-presets"></div></div>
+</section>
+
+<section id="t-qos" class="tab">
+<div class="card"><h3>QoS</h3><p class="sub">Imposta la banda massima che il router lascia passare.</p>
+<div class="row"><div class="l"><div class="t">QoS attivo</div><div class="d" id="q-now">-</div></div><label class="sw"><input type="checkbox" id="s-qos2" onchange="tog('qos',this)"><i></i></label></div>
+<div class="grid2"><label>Download (Mbps)<input id="q-down" class="f" type="number" inputmode="numeric"></label><label>Upload (Mbps)<input id="q-up" class="f" type="number" inputmode="numeric"></label></div>
+<button class="btn w" onclick="applyQos()">Applica questi valori</button>
+<div class="grid2" style="margin-top:14px"><input id="p-name" class="f" placeholder="Nome profilo" style="width:100%"><button class="btn g" onclick="savePreset()">Salva come profilo</button></div>
+</div>
+<div class="card"><h3>I tuoi profili</h3><div class="chips" id="qos-presets"></div></div>
+<div class="card"><h3>Impostazioni nascoste del QoS</h3>
+<div class="help w">Parametri non documentati da TP-Link e invisibili nel pannello originale. Cambiali per fare test: se qualcosa non va, usa "Ripristina valori originali" in Avanzate.</div>
+<div id="qos-adv"></div><button class="btn w" onclick="saveSec('smart_network','qos','qos-adv')">Salva</button></div>
+</section>
+
+<section id="t-dev" class="tab">
+<div class="card"><h3>Priorità dispositivi</h3><p class="sub">Interruttore = priorità alta (funziona solo con il QoS attivo; mettila solo alla PS5). Tocca "Limite" per dare un tetto di velocità a un dispositivo: funziona anche con il QoS spento.</p>
+<div id="dev"></div><button class="btn g w" onclick="loadDev()">Aggiorna elenco</button></div>
+</section>
+
+<section id="t-adv" class="tab">
+<div id="adv"></div>
+<div class="card"><h3>Comando libero</h3><p class="sub">Per esperti: invia qualsiasi comando al router.</p>
+<input id="rp" class="f" style="width:100%" value="admin/smart_network?form=game_accelerator">
+<textarea id="rj" class="f" style="margin-top:8px">{"operation":"loadDevice"}</textarea>
+<button class="btn w" onclick="raw()">Invia</button><pre id="ro" style="white-space:pre-wrap;font-size:12px;max-height:300px;overflow:auto"></pre></div>
+<div class="card"><h3>Sicurezza</h3>
+<button class="btn r w" onclick="restore()">Ripristina valori originali</button>
+<p class="sub" style="margin-top:8px">Rimette tutte le impostazioni come erano la prima volta che l'app le ha lette.</p>
+<input id="pw2" class="f" type="password" style="width:100%;margin-top:8px" placeholder="Nuova password router"><button class="btn g w" onclick="setup(1)">Aggiorna password</button></div>
+</section>
+
+<section id="t-guide" class="tab"><div class="card guide">
+<h3>Guida rapida</h3>
+<h4>QoS</h4><p>Il router limita la banda totale ai valori che imposti e gestisce lui la coda, facendo passare prima i dispositivi in priorità alta. Così il ping non sale quando qualcuno scarica o guarda video. Per funzionare il valore deve stare sotto la velocità reale della linea. Su questo router, a quasi 1 Gbps, conviene stare intorno a 600-700 in download.</p>
+<h4>NAT Boost</h4><p>È l'accelerazione hardware: un chip dedicato gestisce il traffico al posto del processore, così hai tutta la velocità. Il router lo segnala come <b>non compatibile con il QoS</b>: quando accendi il QoS il NAT Boost si spegne, il traffico passa dal processore (dual-core da 1 GHz) e la velocità massima cala. Per questo con il QoS acceso perdi banda.</p>
+<h4>Posso accenderli insieme?</h4><p>Puoi provarci: accendi entrambi gli interruttori nella Home. Dopo ogni modifica l'app rilegge lo stato reale dal router. Se il NAT Boost torna spento da solo, vuol dire che il firmware lo blocca. Non esiste un NAT Boost per singolo dispositivo: il router lo applica a tutta la rete.</p><h4>Gaming Boost</h4><p>Il NAT Boost non si può attivare per un solo dispositivo e non funziona insieme al QoS. Gaming Boost fa il contrario: spegne il QoS (così il NAT Boost lavora per tutti) e mette un tetto di velocità a tutti gli altri dispositivi. Non possono saturare la linea e la PS5 resta in prima linea. Per sapere se i limiti tengono acceso il NAT Boost, fai un test con Waveform dal PC protetto, prima e dopo: se la velocità resta alta, funziona.</p><h4>Quale scegliere?</h4><p><b>Rete tranquilla</b>: QoS spento e NAT Boost acceso, cioè massima velocità e latenza minima. <b>Casa piena</b> (streaming, download): profilo QoS gaming, che protegge il ping. Fai le tue prove e confronta con waveform.com/tools/bufferbloat.</p>
+<h4>DMZ</h4><p>Apre tutte le porte verso un dispositivo (la tua PS5), così il NAT risulta il più aperto possibile. Il prezzo è che quel dispositivo è esposto direttamente a internet. Per una console il rischio è basso.</p>
+<h4>UPnP</h4><p>Permette a console e app di aprire da sole le porte che servono. Con la DMZ attiva è quasi superfluo per la PS5, ma aiuta gli altri dispositivi.</p>
+<h4>Pesi di priorità (alta, media, bassa)</h4><p>Sono percentuali nascoste del QoS: valori attuali 90, 30 e 10. Secondo me indicano quanta banda viene garantita a ciascuna classe di priorità, ma TP-Link non lo documenta. Cambiali un poco alla volta e misura.</p>
+<h4>Controllo di flusso (WAN/LAN)</h4><p>Permette a una porta di rete di chiedere all'altra di rallentare quando è sovraccarica. Spegnerlo a volte evita micro-pause, ma di solito l'effetto è minimo. È da provare.</p>
+<h4>OFDMA</h4><p>Funzione Wi-Fi 6 utile con tanti dispositivi wireless. Spenta (come ora) può ridurre la latenza in Wi-Fi. Per la PS5 via cavo è irrilevante.</p>
+<h4>Riavvii</h4><p>Alcune modifiche, come il NAT Boost, possono far riavviare il router: la rete sparisce per circa 3 minuti, poi torna da sola.</p>
+</div></section>
+</main>
+<nav>
+<button data-t="home" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+<button data-t="qos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>QoS</button>
+<button data-t="dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Dispositivi</button>
+<button data-t="adv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Avanzate</button>
+<button data-t="guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>Guida</button>
+</nav>
+<div id="toast"></div><div id="busy"><div class="spin"></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+let H={};
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),2600);}
+function busy(b){$('busy').classList.toggle('show',b);}
+function stat(ok,t){$('dot').style.background=ok?'var(--ok)':'var(--bad)';$('stt').textContent=t;}
+
+// ---- collegamento al client Java (login cifrato, sessione automatica) ----
+const PEND={};let RID=0;
+window.__cb=(id,ok,res)=>{const p=PEND[id];if(!p)return;delete PEND[id];ok?p.res(res):p.rej(new Error(res));};
+function R(path,params){return new Promise((res,rej)=>{const id='r'+(++RID);PEND[id]={res,rej};Android.call(id,path,JSON.stringify(params));}).then(txt=>{let j;try{j=JSON.parse(txt);}catch(e){throw new Error('Risposta non valida dal router');}if(j.success===false)throw new Error('Il router ha rifiutato il comando ('+(j.errorcode??'errore')+')');return j.data;});}
+const U=(m,f)=>`admin/${m}?form=${f}`;
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;}},set(k,v){localStorage.setItem(k,JSON.stringify(v));}};
+const DEF_PRESETS=[{name:'Gaming',down:600,up:1000},{name:'Linea piena',down:1000,up:1000}];
+function presets(){let p=LS.get('presets',null);if(!p){p=DEF_PRESETS;LS.set('presets',p);}return p;}
+function backupOnce(m,f,v){if(!v||typeof v!=='object'||Array.isArray(v))return;const b=LS.get('backup',{});if(!b[m+'/'+f]){b[m+'/'+f]=v;LS.set('backup',b);}}
+async function rd(m,f){const v=await R(U(m,f),{operation:'read'});backupOnce(m,f,v);return v;}
+async function wr(m,f,d){return R(U(m,f),Object.assign({},d,{operation:'write'}));}
+async function backend(p,b){
+ const url=new URL(p,'http://x');const path=url.pathname,q=url.searchParams;b=b||{};
+ if(path==='/api/state')return{configured:Android.hasPassword()};
+ if(path==='/api/setup'){Android.setPassword(b.password);try{await rd('upnp','enable');}catch(e){Android.setPassword('');throw e;}return true;}
+ if(path==='/api/home')return{qos:await rd('smart_network','qos'),nat:await rd('nat','setting'),dmz:await rd('nat','dmz'),upnp:await rd('upnp','enable'),presets:presets()};
+ if(path==='/api/toggle'){const v=b.on?'on':'off';
+  if(b.what==='qos'){const d=await rd('smart_network','qos');d.enable=v;await wr('smart_network','qos',d);}
+  else if(b.what==='boost'){const d=await rd('nat','setting');d.boost_enable=v;await wr('nat','setting',d);}
+  else if(b.what==='dmz'){const d=await rd('nat','dmz');d.enable=v;if(b.ip)d.ipaddr=b.ip;await wr('nat','dmz',d);}
+  else if(b.what==='upnp'){const d=await rd('upnp','enable');d.enable=v;await wr('upnp','enable',d);}
+  return true;}
+ if(path==='/api/qos/apply'){const dn=parseInt(b.down),up=parseInt(b.up);if(!(dn>=1&&dn<=2500&&up>=1&&up<=2500))throw new Error('Valori fuori range (1-2500 Mbps)');
+  const d=await rd('smart_network','qos');Object.assign(d,{enable:'on',down_band:String(dn),up_band:String(up),down_unit:'mbps',up_unit:'mbps'});await wr('smart_network','qos',d);return true;}
+ if(path==='/api/presets/save'){const n=(b.name||'').trim().slice(0,30);if(!n)throw new Error('Dai un nome al profilo');let pr=presets().filter(x=>x.name.toLowerCase()!==n.toLowerCase());pr.push({name:n,down:parseInt(b.down),up:parseInt(b.up)});LS.set('presets',pr);return pr;}
+ if(path==='/api/presets/delete'){const pr=presets().filter(x=>x.name!==b.name);LS.set('presets',pr);return pr;}
+ if(path==='/api/read')return rd(q.get('m'),q.get('f'));
+ if(path==='/api/write')return wr(b.m,b.f,b.data);
+ if(path==='/api/devices')return R(U('smart_network','game_accelerator'),{operation:'loadDevice'});
+ if(path==='/api/prio'){const it=b.item;const nw=Object.assign({},it,{enablePriority:!!b.enable,timePeriod:-1});return R(U('smart_network','device_priority'),{operation:'update',key:it.key,new:JSON.stringify(nw),old:JSON.stringify(it)});}
+ if(path==='/api/limit'){const it=b.item;const on=!!b.on;const k=v=>(v>0?Math.round(v*1024):-1);return R(U('smart_network','client_speed_limit'),{operation:'write',mac:it.mac,enableLimit:on?'on':'off',downloadLimit:on?k(b.down):-1,uploadLimit:on?k(b.up):-1});}
+ if(path==='/api/restore'){const bk=LS.get('backup',{});for(const k of Object.keys(bk)){const [m,f]=k.split('/');await wr(m,f,bk[k]);}return true;}
+ if(path==='/api/raw')return R(String(b.path).replace(/^\/+/,''),b.params||{});
+ throw new Error('Comando sconosciuto');}
+async function api(p,b){busy(true);try{const d=await backend(p,b);stat(true,'Collegato');return d;}catch(e){stat(false,'Errore');throw e;}finally{busy(false);}}
+
+function show(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.id==='t-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ if(t==='qos')loadQosAdv();if(t==='dev'&&!$('dev').innerHTML)loadDev();if(t==='adv'&&!$('adv').innerHTML)buildAdv();window.scrollTo(0,0);}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+
+const OO=v=>v==='on';
+function setK(id,on,txt){const e=$(id);e.textContent=txt;e.className='v '+(on?'on-t':'off-t');}
+function presetChips(box,list,cur,del){box.innerHTML='';list.forEach(p=>{const act=cur&&cur.enable==='on'&&+cur.down_band===+p.down&&+cur.up_band===+p.up;const c=document.createElement('div');c.className='chip'+(act?' act':'');c.innerHTML=`<div onclick=""><b>${esc(p.name)}</b><br><small>${p.down} / ${p.up} Mbps</small></div>`+(del?'<button title="Elimina">✕</button>':'');c.firstChild.onclick=()=>applyPreset(p);if(del)c.querySelector('button').onclick=e=>{e.stopPropagation();delPreset(p.name)};box.appendChild(c);});if(!list.length)box.innerHTML='<p class="sub">Nessun profilo salvato.</p>';}
+function render(){const q=H.qos||{},n=H.nat||{},d=H.dmz||{},u=H.upnp||{};
+ setK('k-qos',OO(q.enable),OO(q.enable)?`${q.down_band}/${q.up_band}`:'Spento');
+ setK('k-boost',OO(n.boost_enable),OO(n.boost_enable)?'Acceso':'Spento');
+ setK('k-dmz',OO(d.enable),OO(d.enable)?(d.ipaddr||'Acceso'):'Spento');
+ setK('k-upnp',OO(u.enable),OO(u.enable)?'Acceso':'Spento');
+ $('s-qos').checked=$('s-qos2').checked=OO(q.enable);$('s-boost').checked=OO(n.boost_enable);$('s-dmz').checked=OO(d.enable);$('s-upnp').checked=OO(u.enable);
+ $('d-qos').textContent=OO(q.enable)?`Attivo: ${q.down_band} giù / ${q.up_band} su (Mbps)`:'Spento: linea piena';
+ $('d-dmz').textContent=d.ipaddr?`Verso ${d.ipaddr}`:'Tutte le porte verso un dispositivo';
+ $('q-now').textContent=OO(q.enable)?`Ora: ${q.down_band} / ${q.up_band} Mbps`:'Ora: spento';
+ if(document.activeElement!==$('q-down'))$('q-down').value=q.down_band||'';if(document.activeElement!==$('q-up'))$('q-up').value=q.up_band||'';
+ renderPresets();}
+function renderPresets(){const q=H.qos||{};presetChips($('home-presets'),H.presets||[],q,false);presetChips($('qos-presets'),H.presets||[],q,true);}
+async function home(){try{H=await api('/api/home');render();}catch(e){toast('Errore: '+e.message);}}
+async function tog(w,el){const on=el.checked;let ip;if(w==='dmz'&&on&&!(H.dmz&&H.dmz.ipaddr)){ip=prompt('IP del dispositivo per la DMZ (es. 192.168.0.182)');if(!ip){el.checked=false;return;}}
+ if(w==='boost')toast('Il router potrebbe riavviarsi (circa 3 minuti)');
+ try{await api('/api/toggle',{what:w,on,ip});toast('Fatto ✔');await home();}catch(e){el.checked=!on;toast('Errore: '+e.message);}}
+async function applyPreset(p){try{await api('/api/qos/apply',{down:p.down,up:p.up});toast(`Profilo "${p.name}" attivo ✔`);await home();}catch(e){toast('Errore: '+e.message);}}
+async function applyQos(){const d=+$('q-down').value,u=+$('q-up').value;if(!d||!u)return toast('Inserisci download e upload');try{await api('/api/qos/apply',{down:d,up:u});toast('QoS applicato ✔');await home();}catch(e){toast('Errore: '+e.message);}}
+async function savePreset(){const d=+$('q-down').value,u=+$('q-up').value,n=$('p-name').value.trim();if(!n)return toast('Scrivi un nome per il profilo');if(!d||!u)return toast('Inserisci download e upload');try{H.presets=await api('/api/presets/save',{name:n,down:d,up:u});$('p-name').value='';renderPresets();toast('Profilo salvato ✔');}catch(e){toast('Errore: '+e.message);}}
+async function delPreset(n){if(!confirm('Eliminare il profilo "'+n+'"?'))return;try{H.presets=await api('/api/presets/delete',{name:n});renderPresets();}catch(e){toast('Errore: '+e.message);}}
+
+const LBL={max_wan_speed:'Velocità massima porta WAN',enable_app:'QoS per applicazione',max_down_band:'Download massimo impostabile',enable:'Attivo',high:'Peso priorità ALTA (%)',middle:'Peso priorità MEDIA (%)',low:'Peso priorità BASSA (%)',up_band:'Banda upload',down_band:'Banda download',max_up_band:'Upload massimo impostabile',time:'Parametro "time"',qos_iptv_compatible:'Compatibilità IPTV',down_unit:'Unità download',up_unit:'Unità upload',enable_phy:'QoS su porta fisica',boost_support:'NAT Boost supportato',boost_traffic_compatible:'Compatibile con statistiche traffico',boost_enable:'NAT Boost',boost_qos_compatible:'Compatibile con QoS',reboot_time:'Tempo di riavvio (s)',ipaddr:'Indirizzo IP',rx_enable:'Ricezione (RX)',tx_enable:'Trasmissione (TX)',power_mode:'Modalità energia',time_start:'Ora inizio',time_end:'Ora fine'};
+const RO=['max_wan_speed','max_down_band','max_up_band','boost_support','boost_traffic_compatible','boost_qos_compatible','reboot_time','down_unit','up_unit'];
+function field(k,v){const n=`<div class="l"><div class="t">${LBL[k]||k}</div><div class="d">${k}</div></div>`;
+ if(RO.includes(k))return `<div class="row">${n}<span class="ro" data-k="${k}" data-t="r" data-v="${esc(JSON.stringify(v))}">${esc(v)}</span></div>`;
+ if(typeof v==='boolean')return `<div class="row">${n}<label class="sw"><input type="checkbox" data-k="${k}" data-t="b" ${v?'checked':''}><i></i></label></div>`;
+ if(v==='on'||v==='off')return `<div class="row">${n}<label class="sw"><input type="checkbox" data-k="${k}" data-t="o" ${v==='on'?'checked':''}><i></i></label></div>`;
+ if(v!==null&&typeof v==='object')return `<div class="row" style="display:block">${n}<textarea class="f" data-k="${k}" data-t="j">${esc(JSON.stringify(v))}</textarea></div>`;
+ return `<div class="row">${n}<input class="f" data-k="${k}" data-t="${typeof v==='number'?'n':'s'}" value="${esc(v)}"></div>`;}
+function collect(box){const o={};box.querySelectorAll('[data-k]').forEach(e=>{const t=e.dataset.t,k=e.dataset.k;o[k]=t==='r'?JSON.parse(e.dataset.v):t==='b'?e.checked:t==='o'?(e.checked?'on':'off'):t==='n'?Number(e.value):t==='j'?JSON.parse(e.value):e.value;});return o;}
+async function loadInto(m,f,id,only){try{const v=await api(`/api/read?m=${m}&f=${f}`);const ent=only?only.filter(k=>v&&k in v).map(k=>[k,v[k]]):Object.entries(v||{});$(id).innerHTML=ent.map(([k,x])=>field(k,x)).join('')||'<p class="sub">Nessun valore</p>';$(id)._full=v;}catch(e){$(id).innerHTML='<p class="sub">Errore: '+esc(e.message)+'</p>';}}
+async function saveSec(m,f,id){const box=$(id);const data=Object.assign({},box._full||{},collect(box));try{await api('/api/write',{m,f,data});toast('Salvato ✔');await loadInto(m,f,id,box._only);if(m==='smart_network'||m==='nat')home();}catch(e){toast('Errore: '+e.message);}}
+function loadQosAdv(){$('qos-adv')._only=['high','middle','low','time','enable_app','enable_phy','qos_iptv_compatible'];loadInto('smart_network','qos','qos-adv',$('qos-adv')._only);}
+const ADV=[['NAT e NAT Boost','nat','setting','Il NAT Boost è l\'accelerazione hardware. Le voci in grigio sono solo informative.'],['DMZ','nat','dmz','Indirizzo IP del dispositivo a cui aprire tutte le porte.'],['Controllo di flusso porta WAN','network','wan_fc','Pause frame Ethernet sulla porta internet. Spegnerlo è da provare per la latenza.'],['Controllo di flusso porte LAN','network','lan_fc','Pause frame Ethernet sulle porte LAN (PS5, PC).'],['Risparmio energetico (Eco)','eco_mode','settings','Modalità energia e fascia oraria.'],['OFDMA (Wi-Fi 6)','wireless','ofdma','Spento può ridurre la latenza in Wi-Fi.']];
+function buildAdv(){const c=$('adv');ADV.forEach(([t,m,f,h],i)=>{const id='a'+i;const d=document.createElement('div');d.className='card';d.innerHTML=`<h3>${t}</h3><div class="help">${h}</div><div id="${id}"><p class="sub">Tocca "Carica" per leggere i valori.</p></div><div class="grid2"><button class="btn g" data-a="l">Carica</button><button class="btn" data-a="s">Salva</button></div>`;c.appendChild(d);d.querySelector('[data-a=l]').onclick=()=>loadInto(m,f,id);d.querySelector('[data-a=s]').onclick=()=>{if(!$(id)._full)return toast('Prima carica i valori');if(m==='nat'&&f==='setting')toast('Il router potrebbe riavviarsi');saveSec(m,f,id);};});}
+async function loadDev(){try{const list=await api('/api/devices');const box=$('dev');box.innerHTML='';(list||[]).forEach(it=>{const r=document.createElement('div');r.className='row';r.innerHTML=`<div class="l"><div class="t">${esc(it.deviceName||it.mac)}</div><div class="d">${esc(it.ip||'')} · ${esc(it.deviceTag||'')}</div><div class="d" data-lim>${limTxt(it)}</div></div><button class="btn g" data-limbtn style="padding:8px 10px;margin:0 6px 0 0">Limite</button><label class="sw"><input type="checkbox" ${it.enablePriority?'checked':''}><i></i></label>`;r.querySelector('[data-limbtn]').onclick=()=>askLimit(it,r);r.querySelector('input').onchange=async e=>{const on=e.target.checked;try{await api('/api/prio',{item:it,enable:on});it.enablePriority=on;toast((it.deviceName||'Dispositivo')+(on?': priorità alta ✔':': priorità normale'));}catch(x){e.target.checked=!on;toast('Errore: '+x.message);}};box.appendChild(r);});if(!box.innerHTML)box.innerHTML='<p class="sub">Nessun dispositivo</p>';}catch(e){toast('Errore: '+e.message);}}
+const isOn=v=>v===true||v==='on';
+const mbps=k=>(+k>0?Math.round(+k/1024*10)/10:0);
+function limTxt(it){return isOn(it.enableLimit)?`Limite: ${mbps(it.downloadLimit)||'∞'} giù / ${mbps(it.uploadLimit)||'∞'} su (Mbps)`:'Nessun limite';}
+async function askLimit(it,row){const d=prompt('Limite DOWNLOAD in Mbps per '+(it.deviceName||it.mac)+'\n(vuoto o 0 = togli il limite)',isOn(it.enableLimit)?mbps(it.downloadLimit):'');if(d===null)return;
+ const dn=parseFloat(d)||0;let up=0;if(dn>0){const u=prompt('Limite UPLOAD in Mbps (vuoto = nessun limite in upload)',isOn(it.enableLimit)?mbps(it.uploadLimit):'');if(u===null)return;up=parseFloat(u)||0;}
+ const on=dn>0||up>0;try{await api('/api/limit',{item:it,on,down:dn,up});it.enableLimit=on?'on':'off';it.downloadLimit=on&&dn>0?Math.round(dn*1024):-1;it.uploadLimit=on&&up>0?Math.round(up*1024):-1;row.querySelector('[data-lim]').textContent=limTxt(it);toast(on?'Limite impostato ✔':'Limite tolto ✔');}catch(e){toast('Errore: '+e.message);}}
+// --- Gaming Boost
+const GB={get(){try{return JSON.parse(localStorage.getItem('gb'))||{};}catch(e){return{};}},set(v){localStorage.setItem('gb',JSON.stringify(v));}};
+async function gbInit(){const g=GB.get();$('gb-down').value=g.down??100;$('gb-up').value=g.up??50;
+ try{const list=await api('/api/devices');let prot=g.macs;if(!prot||!prot.length)prot=(list||[]).filter(x=>/ps5|playstation/i.test(x.deviceName||'')).map(x=>x.mac);
+  const box=$('gb-devs');box.innerHTML='';(list||[]).forEach(it=>{const r=document.createElement('div');r.className='row';r.innerHTML=`<div class="l"><div class="t">${esc(it.deviceName||it.mac)}</div><div class="d">${esc(it.ip||'')} · ${limTxt(it)}</div></div><label class="sw"><input type="checkbox" data-mac="${esc(it.mac)}" ${prot.includes(it.mac)?'checked':''}><i></i></label>`;box.appendChild(r);});
+  if(!box.innerHTML)box.innerHTML='<p class="sub">Nessun dispositivo trovato</p>';
+  const lim=(list||[]).filter(x=>isOn(x.enableLimit)).length;$('gb-state').textContent=lim?`Dispositivi con limite attivo: ${lim}`:'Nessun limite attivo';}catch(e){}}
+async function gbOn(){const prot=[...document.querySelectorAll('#gb-devs input[data-mac]:checked')].map(e=>e.dataset.mac),dn=parseFloat($('gb-down').value)||0,up=parseFloat($('gb-up').value)||0;if(!prot.length)return toast('Spunta almeno un dispositivo in prima linea');if(!dn&&!up)return toast('Imposta almeno un limite');
+ GB.set({macs:prot,down:dn,up});busy(true);
+ try{await backend('/api/toggle',{what:'qos',on:false});await backend('/api/toggle',{what:'boost',on:true});
+  const list=await backend('/api/devices');let n=0;for(const it of list||[]){if(prot.includes(it.mac)){if(isOn(it.enableLimit))await backend('/api/limit',{item:it,on:false});continue;}await backend('/api/limit',{item:it,on:true,down:dn,up});n++;}
+  stat(true,'Collegato');toast(`Gaming Boost attivo: ${n} dispositivi limitati ✔`);}catch(e){stat(false,'Errore');toast('Errore: '+e.message);}finally{busy(false);}
+ await home();gbInit();}
+async function gbOff(){busy(true);try{const list=await backend('/api/devices');let n=0;for(const it of list||[]){if(isOn(it.enableLimit)){await backend('/api/limit',{item:it,on:false});n++;}}stat(true,'Collegato');toast(`Limiti tolti da ${n} dispositivi ✔`);}catch(e){stat(false,'Errore');toast('Errore: '+e.message);}finally{busy(false);}gbInit();}
+async function raw(){try{$('ro').textContent=JSON.stringify(await api('/api/raw',{path:$('rp').value,params:JSON.parse($('rj').value||'{}')}),null,1);}catch(e){$('ro').textContent='Errore: '+e.message;}}
+async function restore(){if(!confirm('Ripristinare tutte le impostazioni originali?'))return;try{await api('/api/restore',{});toast('Valori originali ripristinati ✔');home();}catch(e){toast('Errore: '+e.message);}}
+async function setup(again){const pw=again?$('pw2').value:$('pw').value;if(!pw)return toast('Inserisci la password');try{await api('/api/setup',{password:pw});toast('Collegato ✔');start();}catch(e){toast('Errore: '+e.message);}}
+async function start(){const s=await api('/api/state');if(!s.configured){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));$('t-setup').classList.add('on');document.querySelector('nav').style.display='none';stat(false,'Da configurare');return;}document.querySelector('nav').style.display='';show('home');await home();gbInit();}
+start();
+</script></body></html>
