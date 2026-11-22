@@ -70,6 +70,10 @@ public class RouterClient {
     // ---------------- login ----------------
     public void login() throws Exception {
         requestKeys();
+        if (preferred.equals("plain") || host.startsWith("https")) {
+            loginPlain();
+            return;
+        }
         String first = !preferred.isEmpty() ? preferred : (nn.length() == 128 ? "ax72" : "std");
         String second = first.equals("ax72") ? "std" : "ax72";
         Exception err;
@@ -88,6 +92,28 @@ public class RouterClient {
             if (err instanceof WrongPassword) throw (WrongPassword) err;
             throw new Exception("Login non riuscito. Dettagli: " + err.getMessage() + " | " + e2.getMessage());
         }
+    }
+
+    /** In https il pannello non cifra i dati: solo la password viaggia cifrata con RSA. */
+    private void loginPlain() throws Exception {
+        scheme = "plain";
+        logged = false;
+        String crypted = rsaPkcs1Hex(password.getBytes(StandardCharsets.UTF_8), pwdNN, pwdEE);
+        String form = "password=" + crypted + "&operation=login&confirm=true";
+        Resp res = post(host + "/cgi-bin/luci/;stok=/login?form=login", form, null);
+        lastLoginBody = res.body;
+        if (res.body.contains("login failed") || res.body.contains("-40401")) throw new WrongPassword();
+        Matcher m = Pattern.compile("\"stok\"\\s*:\\s*\"([^\"]+)\"").matcher(res.body);
+        if (!m.find()) throw new Exception("[https] risposta " + res.code + ": " + shorten(res.body));
+        stok = m.group(1);
+        sysauth = "";
+        if (res.cookies != null) {
+            for (String c : res.cookies) {
+                Matcher cm = Pattern.compile("sysauth=([^;]+)").matcher(c);
+                if (cm.find()) sysauth = cm.group(1);
+            }
+        }
+        logged = true;
     }
 
     public static class WrongPassword extends Exception {
@@ -158,12 +184,14 @@ public class RouterClient {
         Matcher om = Pattern.compile("\"operation\"\\s*:\\s*\"([\\w-]+)\"").matcher(jsonPlain);
         String url = host + "/cgi-bin/luci/;stok=" + stok + "/" + path.replaceAll("^/+", "");
         if (om.find() && !url.contains("operation=")) url += (url.contains("?") ? "&" : "?") + "operation=" + om.group(1);
-        Resp r = post(url, prepare(jsonPlain), sysauth);
+        boolean plain = scheme.equals("plain");
+        if (plain) url = host + "/cgi-bin/luci/;stok=" + stok + "/" + path.replaceAll("^/+", "");
+        Resp r = post(url, plain ? jsonToForm(jsonPlain) : prepare(jsonPlain), sysauth);
         if (r.code == 403 || r.code == 401) {
             logged = false;
             throw new SessionExpired();
         }
-        return decryptEnvelope(r.body);
+        return plain ? r.body : decryptEnvelope(r.body);
     }
 
     public static class SessionExpired extends Exception {
@@ -209,6 +237,91 @@ public class RouterClient {
         Matcher m = Pattern.compile("\"data\"\\s*:\\s*\"([A-Za-z0-9+/=]+)\"").matcher(body);
         if (!m.find()) throw new Exception("Risposta non cifrata: " + shorten(body));
         return aesDecrypt(m.group(1));
+    }
+
+    // ---------------- JSON -> form (come "serialize" del pannello TP-Link) ----------------
+    static String jsonToForm(String json) throws Exception {
+        StringBuilder out = new StringBuilder();
+        int[] i = {skipWs(json, 0)};
+        if (i[0] >= json.length() || json.charAt(i[0]) != '{') throw new Exception("JSON non valido");
+        i[0] = skipWs(json, i[0] + 1);
+        if (json.charAt(i[0]) == '}') return "";
+        while (true) {
+            String key = readString(json, i);
+            i[0] = skipWs(json, i[0]);
+            if (json.charAt(i[0]) != ':') throw new Exception("JSON non valido");
+            i[0] = skipWs(json, i[0] + 1);
+            String val;
+            if (json.charAt(i[0]) == '"') {
+                val = readString(json, i);
+            } else {
+                int start = i[0];
+                i[0] = skipValue(json, i[0]);
+                val = json.substring(start, i[0]).trim();
+            }
+            if (!val.equals("null")) {
+                if (out.length() > 0) out.append('&');
+                out.append(URLEncoder.encode(key, "UTF-8").replace("+", "%20")).append('=')
+                   .append(URLEncoder.encode(val, "UTF-8").replace("+", "%20"));
+            }
+            i[0] = skipWs(json, i[0]);
+            char c = json.charAt(i[0]);
+            if (c == ',') { i[0] = skipWs(json, i[0] + 1); continue; }
+            if (c == '}') break;
+            throw new Exception("JSON non valido");
+        }
+        return out.toString();
+    }
+
+    private static int skipWs(String s, int i) {
+        while (i < s.length() && Character.isWhitespace(s.charAt(i))) i++;
+        return i;
+    }
+
+    private static String readString(String s, int[] i) throws Exception {
+        if (s.charAt(i[0]) != '"') throw new Exception("JSON non valido");
+        StringBuilder sb = new StringBuilder();
+        int p = i[0] + 1;
+        while (p < s.length()) {
+            char c = s.charAt(p);
+            if (c == '"') { i[0] = p + 1; return sb.toString(); }
+            if (c == '\\') {
+                char n = s.charAt(++p);
+                switch (n) {
+                    case 'n': sb.append('\n'); break;
+                    case 't': sb.append('\t'); break;
+                    case 'r': sb.append('\r'); break;
+                    case 'b': sb.append('\b'); break;
+                    case 'f': sb.append('\f'); break;
+                    case 'u': sb.append((char) Integer.parseInt(s.substring(p + 1, p + 5), 16)); p += 4; break;
+                    default: sb.append(n);
+                }
+                p++;
+                continue;
+            }
+            sb.append(c);
+            p++;
+        }
+        throw new Exception("JSON non valido");
+    }
+
+    /** Salta un valore non-stringa (numero, true/false/null, oggetto, array) e ne restituisce la fine. */
+    private static int skipValue(String s, int i) {
+        int depth = 0;
+        boolean inStr = false;
+        for (; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (inStr) {
+                if (c == '\\') i++;
+                else if (c == '"') inStr = false;
+                continue;
+            }
+            if (c == '"') inStr = true;
+            else if (c == '{' || c == '[') depth++;
+            else if (c == '}' || c == ']') { if (depth == 0) return i; depth--; if (depth == 0) return i + 1; }
+            else if (c == ',' && depth == 0) return i;
+        }
+        return i;
     }
 
     // ---------------- crittografia ----------------
