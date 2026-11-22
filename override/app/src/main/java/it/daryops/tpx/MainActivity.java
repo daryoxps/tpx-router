@@ -78,14 +78,14 @@ public class MainActivity extends Activity {
         idleLogout = timer.schedule(() -> worker.submit(this::closeSession), IDLE_SECONDS, TimeUnit.SECONDS);
     }
 
-    /** Ottiene una sessione attiva, provando https e poi http. */
+    /** Ottiene una sessione attiva: prima http (il pannello cifra i dati solo in http), poi https. */
     private RouterClient session() throws Exception {
         if (client != null && client.isLogged()) return client;
         String pwd = prefs.getString("pwd", "");
         if (pwd.isEmpty()) throw new Exception("Password non impostata");
         String saved = prefs.getString("host", "");
         String[] hosts = saved.isEmpty()
-                ? new String[]{"https://192.168.0.1", "http://192.168.0.1"}
+                ? new String[]{"http://192.168.0.1", "https://192.168.0.1"}
                 : new String[]{saved};
         Exception last = null;
         for (String h : hosts) {
