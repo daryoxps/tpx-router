@@ -88,6 +88,7 @@ public class MainActivity extends Activity {
                 ? new String[]{"http://192.168.0.1", "https://192.168.0.1"}
                 : new String[]{saved};
         Exception last = null;
+        StringBuilder errs = new StringBuilder();
         for (String h : hosts) {
             try {
                 RouterClient c = new RouterClient(h, pwd);
@@ -98,11 +99,13 @@ public class MainActivity extends Activity {
                 return c;
             } catch (Exception e) {
                 last = e;
+                errs.append(h.startsWith("https") ? "[https] " : "[http] ").append(e.getMessage()).append("  ");
                 if (e instanceof RouterClient.WrongPassword) break;
             }
         }
         if (saved.length() > 0) prefs.edit().remove("host").apply();
-        throw last != null ? last : new Exception("Router non raggiungibile");
+        if (last instanceof RouterClient.WrongPassword) throw last;
+        throw new Exception(errs.length() > 0 ? errs.toString().trim() : "Router non raggiungibile");
     }
 
     private String doCall(String path, String json) throws Exception {
