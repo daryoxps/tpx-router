@@ -28,7 +28,7 @@ main{padding:0 14px}
 .sw input{opacity:0;width:0;height:0}
 .sw i{position:absolute;inset:0;background:#334155;border-radius:30px;transition:.2s}
 .sw i:before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
-.sw input:checked+i{background:var(--ok)}.sw input:checked+i:before{transform:translateX(22px)}
+.sw input:checked+i{background:var(--ok)}.sw.pz input:checked+i{background:var(--warn)}.warn-t{color:var(--warn)}.sw input:checked+i:before{transform:translateX(22px)}
 input.f,select.f,textarea.f{background:#0a1020;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:16px system-ui;width:120px}
 textarea.f{width:100%;min-height:80px;font:13px monospace}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
@@ -205,7 +205,7 @@ function setK(id,on,txt){const e=$(id);e.textContent=txt;e.className='v '+(on?'o
 function presetChips(box,list,cur,del){box.innerHTML='';list.forEach(p=>{const act=cur&&cur.enable==='on'&&+cur.down_band===+p.down&&+cur.up_band===+p.up;const c=document.createElement('div');c.className='chip'+(act?' act':'');c.innerHTML=`<div onclick=""><b>${esc(p.name)}</b><br><small>${p.down} / ${p.up} Mbps</small></div>`+(del?'<button title="Elimina">✕</button>':'');c.firstChild.onclick=()=>applyPreset(p);if(del)c.querySelector('button').onclick=e=>{e.stopPropagation();delPreset(p.name)};box.appendChild(c);});if(!list.length)box.innerHTML='<p class="sub">Nessun profilo salvato.</p>';}
 function render(){const q=H.qos||{},n=H.nat||{},d=H.dmz||{},u=H.upnp||{};
  setK('k-qos',OO(q.enable),OO(q.enable)?`${q.down_band}/${q.up_band}`:'Spento');
- setK('k-boost',OO(n.boost_enable)&&!OO(q.enable),OO(n.boost_enable)?(OO(q.enable)?'In pausa':'Attivo'):'Spento');$('d-boost').textContent=OO(n.boost_enable)?(OO(q.enable)?'Acceso ma in pausa: il QoS è attivo':'Accelerazione hardware attiva'):'Accelerazione hardware spenta';
+ setK('k-boost',OO(n.boost_enable)&&!OO(q.enable),OO(n.boost_enable)?(OO(q.enable)?'In pausa':'Attivo'):'Spento');{const pz=OO(n.boost_enable)&&OO(q.enable);$('s-boost').parentNode.classList.toggle('pz',pz);if(pz)$('k-boost').className='v warn-t';}$('d-boost').textContent=OO(n.boost_enable)?(OO(q.enable)?'Acceso ma in pausa: il QoS è attivo':'Accelerazione hardware attiva'):'Accelerazione hardware spenta';
  setK('k-dmz',OO(d.enable),OO(d.enable)?(d.ipaddr||'Acceso'):'Spento');
  setK('k-upnp',OO(u.enable),OO(u.enable)?'Acceso':'Spento');
  $('s-qos').checked=$('s-qos2').checked=OO(q.enable);$('s-boost').checked=OO(n.boost_enable);$('s-dmz').checked=OO(d.enable);$('s-upnp').checked=OO(u.enable);
